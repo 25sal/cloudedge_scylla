@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_Asymmetric" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="asymmetric_round_robin" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_1"><bpmn:outgoing>Flow_Start</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:exclusiveGateway id="Gateway_Route">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_Node0</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Node1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Node2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="StartEvent_1" targetRef="Gateway_Route" />
+    <bpmn:task id="Cache_Lookup_0" name="Cache lookup node 0">
+      <bpmn:incoming>Flow_Node0</bpmn:incoming>
+      <bpmn:outgoing>Flow_End0</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_Node0" sourceRef="Gateway_Route" targetRef="Cache_Lookup_0" />
+    <bpmn:endEvent id="End_Node0" name="Lookup complete on node 0">
+      <bpmn:incoming>Flow_End0</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_End0" sourceRef="Cache_Lookup_0" targetRef="End_Node0" />
+    <bpmn:task id="Cache_Lookup_1" name="Cache lookup node 1">
+      <bpmn:incoming>Flow_Node1</bpmn:incoming>
+      <bpmn:outgoing>Flow_End1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_Node1" sourceRef="Gateway_Route" targetRef="Cache_Lookup_1" />
+    <bpmn:endEvent id="End_Node1" name="Lookup complete on node 1">
+      <bpmn:incoming>Flow_End1</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_End1" sourceRef="Cache_Lookup_1" targetRef="End_Node1" />
+    <bpmn:task id="Cache_Lookup_2" name="Cache lookup node 2">
+      <bpmn:incoming>Flow_Node2</bpmn:incoming>
+      <bpmn:outgoing>Flow_End2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_Node2" sourceRef="Gateway_Route" targetRef="Cache_Lookup_2" />
+    <bpmn:endEvent id="End_Node2" name="Lookup complete on node 2">
+      <bpmn:incoming>Flow_End2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_End2" sourceRef="Cache_Lookup_2" targetRef="End_Node2" />
+  </bpmn:process>
+</bpmn:definitions>

@@ -8,7 +8,8 @@ package de.hpi.bpt.scylla.logger;
  */
 public class DebugLogger {
 	
-	public static boolean allowDebugLogging = true;
+	// -Dscylla.quiet=true switches debug output off, e.g. for long parameter sweeps
+	public static boolean allowDebugLogging = !Boolean.getBoolean("scylla.quiet");
 
     /**
      * Logs general messages.

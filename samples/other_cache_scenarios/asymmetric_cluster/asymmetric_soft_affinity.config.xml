@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Time model: 1 simulated second stands for 100 ms of real time. Speeds and demands are abstract units. -->
+<!-- Soft weights 4:2:1 are candidate-ranking scores, not weighted random allocation. With the current scheduler, the highest-scoring available node is preferred; use the round-robin BPMN for a uniform routing control. -->
+<bsim:definitions xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" id="asymmetric-soft-config-definitions" targetNamespace="http://www.hpi.de">
+  <bsim:simulationConfiguration id="asymmetric-soft-config" processRef="distcache" processInstances="20000" startDateTime="2025-01-01T00:00:00.000+00:00" randomSeed="42">
+    <bsim:startEvent id="StartEvent_1">
+      <bsim:arrivalRate timeUnit="SECONDS">
+        <bsim:exponentialDistribution>
+          <bsim:mean>50</bsim:mean>
+        </bsim:exponentialDistribution>
+      </bsim:arrivalRate>
+    </bsim:startEvent>
+    <bsim:task id="Cache_Lookup" name="Cache lookup">
+      <bsim:affinity>
+        <bsim:resource id="cache" instance="#0" relation="affinity" mode="soft" weight="4" />
+        <bsim:resource id="cache" instance="#1" relation="affinity" mode="soft" weight="2" />
+        <bsim:resource id="cache" instance="#2" relation="affinity" mode="soft" weight="1" />
+      </bsim:affinity>
+      <bsim:resources>
+        <bsim:resource id="cache" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="10000" />
+      <bsim:attribute key="txMB" value="10" />
+    </bsim:task>
+    <bsim:exclusiveGateway id="Gateway_Hit">
+      <bsim:outgoingSequenceFlow id="Flow_Hit"><bsim:branchingProbability>0.9</bsim:branchingProbability></bsim:outgoingSequenceFlow>
+      <bsim:outgoingSequenceFlow id="Flow_Miss"><bsim:branchingProbability>0.1</bsim:branchingProbability></bsim:outgoingSequenceFlow>
+    </bsim:exclusiveGateway>
+    <bsim:task id="Return_Hit" name="Return cached value">
+      <bsim:resources>
+        <bsim:resource id="app" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="2000" />
+    </bsim:task>
+    <bsim:task id="DB_Read" name="DB read">
+      <bsim:resources>
+        <bsim:resource id="db" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="readOps" value="200" />
+    </bsim:task>
+    <bsim:task id="Cache_Write" name="Cache write">
+      <bsim:resources>
+        <bsim:resource id="cache" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="20000" />
+    </bsim:task>
+    <bsim:task id="Cache_Replicate" name="Cache replicate">
+      <bsim:resources>
+        <bsim:resource id="cache" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="20000" />
+    </bsim:task>
+  </bsim:simulationConfiguration>
+</bsim:definitions>

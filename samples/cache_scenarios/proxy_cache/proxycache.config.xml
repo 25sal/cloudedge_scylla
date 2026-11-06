@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Time model: 1 simulated second stands for 100 ms of real time. Speeds and demands are abstract units. -->
+<bsim:definitions xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" id="proxycache-config-definitions" targetNamespace="http://www.hpi.de">
+  <bsim:simulationConfiguration id="proxycache-config" processRef="proxycache" processInstances="2000" startDateTime="2025-01-01T00:00:00.000+00:00" randomSeed="42">
+    <bsim:startEvent id="StartEvent_1">
+      <bsim:arrivalRate timeUnit="SECONDS">
+        <bsim:exponentialDistribution>
+          <bsim:mean>50</bsim:mean>
+        </bsim:exponentialDistribution>
+      </bsim:arrivalRate>
+    </bsim:startEvent>
+    <bsim:task id="Proxy_Lookup" name="Proxy lookup">
+      <bsim:resources>
+        <bsim:resource id="proxy" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="2000" />
+    </bsim:task>
+    <bsim:exclusiveGateway id="Gateway_Hit">
+      <bsim:outgoingSequenceFlow id="Flow_Hit"><bsim:branchingProbability>0.8</bsim:branchingProbability></bsim:outgoingSequenceFlow>
+      <bsim:outgoingSequenceFlow id="Flow_Miss"><bsim:branchingProbability>0.2</bsim:branchingProbability></bsim:outgoingSequenceFlow>
+    </bsim:exclusiveGateway>
+    <bsim:task id="Proxy_Serve_Hit" name="Proxy serve hit">
+      <bsim:resources>
+        <bsim:resource id="proxy" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="2000" />
+    </bsim:task>
+    <bsim:task id="Origin_Fetch" name="Origin fetch">
+      <bsim:resources>
+        <bsim:resource id="origin" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="readOps" value="200" />
+    </bsim:task>
+    <bsim:task id="Proxy_Store" name="Proxy store">
+      <bsim:resources>
+        <bsim:resource id="proxy" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="2000" />
+    </bsim:task>
+  </bsim:simulationConfiguration>
+</bsim:definitions>

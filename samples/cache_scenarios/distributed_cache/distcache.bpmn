@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_DistCache" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="distcache" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_1" name="Request arrives">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Cache_Lookup" name="Cache lookup">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_Hit" name="Cache hit?">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_Hit</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Miss</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Return_Hit" name="Return cached value">
+      <bpmn:incoming>Flow_Hit</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_Hit" name="Served from cache">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="DB_Read" name="DB read">
+      <bpmn:incoming>Flow_Miss</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Cache_Write" name="Cache write">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Cache_Replicate" name="Cache replicate">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_Miss" name="Served from database">
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Cache_Lookup" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Cache_Lookup" targetRef="Gateway_Hit" />
+    <bpmn:sequenceFlow id="Flow_Hit" name="hit" sourceRef="Gateway_Hit" targetRef="Return_Hit" />
+    <bpmn:sequenceFlow id="Flow_Miss" name="miss" sourceRef="Gateway_Hit" targetRef="DB_Read" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Return_Hit" targetRef="EndEvent_Hit" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="DB_Read" targetRef="Cache_Write" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Cache_Write" targetRef="Cache_Replicate" />
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Cache_Replicate" targetRef="EndEvent_Miss" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="distcache">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Cache_Lookup_di" bpmnElement="Cache_Lookup">
+        <dc:Bounds x="240" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Hit_di" bpmnElement="Gateway_Hit" isMarkerVisible="true">
+        <dc:Bounds x="400" y="175" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Return_Hit_di" bpmnElement="Return_Hit">
+        <dc:Bounds x="520" y="40" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Hit_di" bpmnElement="EndEvent_Hit">
+        <dc:Bounds x="700" y="62" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DB_Read_di" bpmnElement="DB_Read">
+        <dc:Bounds x="520" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Cache_Write_di" bpmnElement="Cache_Write">
+        <dc:Bounds x="680" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Cache_Replicate_di" bpmnElement="Cache_Replicate">
+        <dc:Bounds x="840" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Miss_di" bpmnElement="EndEvent_Miss">
+        <dc:Bounds x="1020" y="302" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="200" />
+        <di:waypoint x="240" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="200" />
+        <di:waypoint x="400" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Hit_di" bpmnElement="Flow_Hit">
+        <di:waypoint x="425" y="175" />
+        <di:waypoint x="425" y="80" />
+        <di:waypoint x="520" y="80" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Miss_di" bpmnElement="Flow_Miss">
+        <di:waypoint x="425" y="225" />
+        <di:waypoint x="425" y="320" />
+        <di:waypoint x="520" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="620" y="80" />
+        <di:waypoint x="700" y="80" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="620" y="320" />
+        <di:waypoint x="680" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
+        <di:waypoint x="780" y="320" />
+        <di:waypoint x="840" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
+        <di:waypoint x="940" y="320" />
+        <di:waypoint x="1020" y="320" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

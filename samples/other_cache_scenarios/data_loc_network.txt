@@ -1,0 +1,13 @@
+Act as a systems performance engineer and Scylla simulator expert. I want to demonstrate the effectiveness of hard and anti-affinity rules when network costs are non-uniform (e.g., Multi-AZ or Multi-Region deployment).
+
+Please generate the configuration or simulation setup for the following experiment:
+- Cluster Topology: 4 cache nodes divided into two zones. Nodes #0 and #1 are in "Zone A". Nodes #2 and #3 are in "Zone B".
+- Variable Network Penalty: 
+  * Cache lookup on the same local node that owns the key: txMB = 0 (local hit).
+  * Cache lookup on a different node within the same zone: txMB = 2.
+  * Cache lookup across zones (e.g., lookup on Zone A, owner is on Zone B): txMB = 40 (high latency).
+- Comparison: Set up two configuration variants to compare:
+  1. Variant 'none': Random routing ignoring network topology.
+  2. Variant 'owner': Hard affinity to the key owner node and anti-affinity for replication.
+
+Provide the Scylla simulator files or routing definitions to implement this network cost penalty and compare these two variants.

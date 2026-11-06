@@ -1,0 +1,4 @@
+<plugin>
+  <class>de.hpi.bpt.scylla.plugin.resourcecost.ResourceCostBasedTaskDurationPlugin</class>
+  <type>simulation.event.taskBegin</type>
+</plugin>

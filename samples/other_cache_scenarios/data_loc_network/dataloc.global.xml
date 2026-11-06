@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- cpuSpeed: instructions/s, ioRead/ioWrite: operations/s, txSpeed/rxSpeed: MB/s (abstract units) -->
+<!-- Four equal cache nodes: #0/#1 are Zone A; #2/#3 are Zone B. -->
+<bsim:globalConfiguration xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" targetNamespace="http://www.hpi.de" id="dataloc-global" softmaxExponent="1">
+  <bsim:resourceData>
+    <bsim:dynamicResource id="cache" defaultQuantity="4" defaultCost="1" defaultTimeUnit="SECONDS" cpuSpeed="1000" txSpeed="1" />
+    <bsim:dynamicResource id="db" defaultQuantity="1" defaultCost="1" defaultTimeUnit="SECONDS" ioRead="1" />
+    <bsim:dynamicResource id="app" defaultQuantity="20" defaultCost="1" defaultTimeUnit="SECONDS" cpuSpeed="1000" />
+  </bsim:resourceData>
+  <bsim:randomSeed>42</bsim:randomSeed>
+</bsim:globalConfiguration>

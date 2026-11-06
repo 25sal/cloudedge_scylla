@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="clientserver" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>flow1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:task id="Client_HTTP_Request" name="Client - HTTP request">
+      <bpmn:incoming>flow1</bpmn:incoming>
+      <bpmn:outgoing>flow2</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Client_IMG_Request" name="Client - Image request">
+      <bpmn:incoming>flow2</bpmn:incoming>
+      <bpmn:outgoing>flow3</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Server_Send_HTML" name="Server - Send HTML">
+      <bpmn:incoming>flow3</bpmn:incoming>
+      <bpmn:outgoing>flow4</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Server_Send_IMG" name="Server - Send IMG">
+      <bpmn:incoming>flow4</bpmn:incoming>
+      <bpmn:outgoing>flow5</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Client_Process_Response" name="Client - Process response">
+      <bpmn:incoming>flow5</bpmn:incoming>
+      <bpmn:outgoing>flow6</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:endEvent id="EndEvent_1" name="End">
+      <bpmn:incoming>flow6</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="flow1" sourceRef="StartEvent_1" targetRef="Client_HTTP_Request"/>
+    <bpmn:sequenceFlow id="flow2" sourceRef="Client_HTTP_Request" targetRef="Client_IMG_Request"/>
+    <bpmn:sequenceFlow id="flow3" sourceRef="Client_IMG_Request" targetRef="Server_Send_HTML"/>
+    <bpmn:sequenceFlow id="flow4" sourceRef="Server_Send_HTML" targetRef="Server_Send_IMG"/>
+    <bpmn:sequenceFlow id="flow5" sourceRef="Server_Send_IMG" targetRef="Client_Process_Response"/>
+    <bpmn:sequenceFlow id="flow6" sourceRef="Client_Process_Response" targetRef="EndEvent_1"/>
+  </bpmn:process>
+</bpmn:definitions>

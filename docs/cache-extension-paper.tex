@@ -1,0 +1,230 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+
+\title{Extending a BPMN Discrete-Event Simulator for Resource-Aware Cache-System Studies}
+\author{Author Name\\Department / Institution\\Email address}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This paper describes a plugin-oriented extension to a BPMN discrete-event simulator for studying distributed
+cache-service behavior. The extension adds a resource-aware service-time model based on CPU, storage I/O and network
+demands, a generalized-mean (softmax) aggregation, CPU idle-capacity scaling, and hard and soft affinity constraints
+that can refer to resource properties or to the execution history of the same process instance. A small resource-tuple
+ranking hook integrates affinity with the existing resource scheduler. Three synthetic experiments illustrate (i)
+cache-tier scale-out in the presence of a fixed database bottleneck, (ii) fixed network-transfer penalties combined
+with ownership and replica constraints, and (iii) heterogeneous cache nodes under uniform routing and soft-affinity
+ranking. The scenarios are provided as BPMN and Scylla configuration files. The current model does not maintain cache
+contents or a network topology; those limits are made explicit so that the experiments are interpreted as controlled
+what-if studies rather than as simulations of a complete cache implementation.
+\end{abstract}
+
+\noindent\textbf{Keywords---} BPMN, discrete-event simulation, distributed cache, resource-aware service time,
+affinity scheduling, softmax
+
+\section{Introduction}
+
+Cache systems are useful examples for evaluating interactions between request routing, heterogeneous resources,
+replication and backend bottlenecks. A BPMN model expresses the request path and branching behavior, while a
+discrete-event engine represents request arrivals, resource queues and task execution. A basic process simulator,
+however, usually treats task duration as an input distribution and does not directly connect task work to the selected
+machine or expose execution history to the resource scheduler.
+
+This work describes an extension that preserves the simulator's BPMN execution and resource-queue machinery while
+adding these capabilities through plugins. A single hook in the core scheduler allows extensions to rank candidate
+resource tuples after the scheduler has checked resource type, quantity and availability. Separate parser and event
+plugins interpret hardware/workload annotations, calculate task service times and record per-process-instance
+resource history.
+
+The contribution is an implementable, reproducible modeling layer rather than a complete distributed-cache engine.
+Three generated experiments show how the extension can be used and identify which conclusions are supported by the
+current abstractions.
+
+\section{Extension Design}
+
+\subsection{Resource-Aware Task Demand}
+
+A workload is attached to a task in the simulation configuration. The supported demand attributes are instruction
+count $N_{\mathrm{instr}}$, read and write operation counts $N_{\mathrm{read}}$ and $N_{\mathrm{write}}$, and transmitted
+and received data volumes $D_{\mathrm{tx}}$ and $D_{\mathrm{rx}}$. Hardware attributes are attached to a dynamic
+resource type or a named resource instance: CPU speed $S_{\mathrm{cpu}}$, idle factor $\alpha$, read/write rates
+$B_{\mathrm{read}}$ and $B_{\mathrm{write}}$, and transmit/receive rates $B_{\mathrm{tx}}$ and $B_{\mathrm{rx}}$.
+Instance attributes override type defaults. The parser plugins retain these values in the simulator's extension data;
+no resource-model field or core XML parser is changed.
+
+CPU service time includes idle-capacity scaling:
+\begin{equation}
+S_{\mathrm{cpu}}^{\mathrm{eff}} = S_{\mathrm{cpu}}(1-\alpha), \qquad
+T_{\mathrm{cpu}} = \frac{N_{\mathrm{instr}}}{S_{\mathrm{cpu}}(1-\alpha)}, \quad 0\leq\alpha<1.
+\end{equation}
+Storage and network components are additive within their domains:
+\begin{align}
+T_{\mathrm{io}} &= \frac{N_{\mathrm{read}}}{B_{\mathrm{read}}}+
+                    \frac{N_{\mathrm{write}}}{B_{\mathrm{write}}},\\
+T_{\mathrm{net}} &= \frac{D_{\mathrm{tx}}}{B_{\mathrm{tx}}}+
+                     \frac{D_{\mathrm{rx}}}{B_{\mathrm{rx}}}.
+\end{align}
+The total service time combines the three components with a generalized mean:
+\begin{equation}
+T_{\mathrm{service}} = \left(T_{\mathrm{cpu}}^p+T_{\mathrm{io}}^p+T_{\mathrm{net}}^p\right)^{1/p},
+\qquad p\geq 1.
+\label{eq:softmax}
+\end{equation}
+For $p=1$, the result is additive; increasing $p$ approaches the largest component. The implementation normalizes by
+the largest component before exponentiation to reduce overflow for large $p$. Durations are expressed in seconds when
+speeds are expressed per second. The simulator represents event time at whole-second resolution and truncates
+fractional task durations, so example values are scaled to avoid relying on sub-second differences.
+
+When more than one resource is assigned to a task, the current duration plugin uses the lowest defined speed for each
+component as the bottleneck. A component with nonzero demand but no corresponding speed is reported as an error. This
+is a modeling convention; it is not a fluid-sharing or parallel-service model.
+
+\subsection{Affinity-Aware Resource Selection}
+
+The core scheduler first forms candidate resource tuples that satisfy requested resource types, amounts and timetables,
+then applies the existing default last-access ordering. A new \texttt{ResourceTupleRankingPluggable} hook allows a
+plugin to filter and reorder these candidates before assignment. The affinity plugin implements two kinds of rules:
+
+\begin{itemize}
+  \item \emph{Hard rules} reject candidates that violate affinity or anti-affinity.
+  \item \emph{Soft rules} add their configured weights to candidates that satisfy them; candidates are sorted by the
+        sum of satisfied weights, preserving default order for ties.
+\end{itemize}
+
+Rules may target a resource type or named instance, or refer to the resources that executed an earlier task of the
+same process instance. If a history reference has not executed yet, its rule does not apply. History is recorded at
+task start and is scoped to the process instance. Ranking is side-effect-free because the scheduler also requests a
+candidate selection when it is checking whether an event can proceed.
+
+If all candidates are rejected, the task remains queued. In that case the core returns the resources temporarily
+polled during candidate construction to their queues. This preserves queue state and allows a later retry. The ranking
+hook itself does not reserve resources; the existing scheduler performs the assignment after ranking.
+
+A soft weight is a ranking priority, not a probability. With the current plugin, a weight of four does not imply four
+times as many assignments as a weight of one. Similarly, a rule-free task is allocated by the simulator's default
+resource policy, not necessarily uniform random or round robin.
+
+\subsection{Gateway Seeding}
+
+The existing simulator seeds distributions in a configuration with the same configured seed. Consequently, an
+arrival-rate distribution and an exclusive-gateway distribution can produce correlated random sequences. An opt-in
+system property, \texttt{-Dscylla.independentSeeds=true}, derives an exclusive-gateway seed from the configuration
+seed and gateway node identifier. The default behavior is retained for compatibility. The cache experiment runner
+enables the option when comparing results with independent Poisson thinning; it does not change seeds for all other
+distribution types.
+
+\section{Scenario Models}
+
+All experiments are synthetic and use 20,000 process instances, mean inter-arrival time 50 simulated seconds and a
+fixed 0.9 hit probability unless specified otherwise. The illustrative time mapping is one simulated second to
+100 ms. Speeds are abstract parameters, not measurements of hardware. The BPMN gateway fixes the hit/miss fraction;
+there is no cache-content state and no key-popularity-driven hit calculation.
+
+\subsection{Scale-Out with a Fixed Database Tier}
+
+The process is the distributed-cache flow: cache lookup, exclusive hit/miss split, return on hit, and database read,
+cache write and replication on miss. Cache nodes are identical, with $S_{\mathrm{cpu}}=1000$ instructions/s and
+$B_{\mathrm{tx}}=1$ MB/s. A single database resource has $B_{\mathrm{read}}=1$ operation/s. The four configurations
+vary only the cache population $N\in\{2,4,8,16\}$; no affinity rules are present.
+
+A lookup consumes 10,000 instructions and transmits 10 MB, hence 10 s CPU and 10 s network service at $p=1$. Cache
+write and replication each consume 20,000 instructions (20 s). A database read consumes 200 read operations (200 s).
+With arrival rate $\lambda=1/50$ and miss probability $q=0.1$, the nominal database utilization is
+\begin{equation}
+\rho_{\mathrm{DB}}=\lambda q T_{\mathrm{DB}}=\frac{1}{50}\cdot 0.1\cdot 200=0.4.
+\end{equation}
+Under ideal even allocation, approximate total cache demand is $20+q(20+20)=24$ seconds per request, yielding
+per-node utilization $\rho_{\mathrm{cache}}\approx24/(50N)$. This gives 0.24, 0.12, 0.06 and 0.03 for the four
+cluster sizes. These values are analytical estimates, not simulation measurements. The expected signature of a fixed
+backend bottleneck is falling cache-node utilization with little improvement in miss latency once DB waiting/service
+dominates.
+
+Measurements should include per-node utilization and assignment share, database utilization and queue wait, mean hit
+and miss response times, and completion time for the fixed workload. Averages alone may conceal imbalance, so both
+per-node and aggregate utilization should be reported.
+
+\subsection{Fixed Transfer-Volume Locality Proxy}
+
+The second experiment uses four equal cache instances. The intended labels are Zone A for \#0 and \#1 and Zone B for
+\#2 and \#3. Six simulation configurations combine three fixed transfer-volume categories with two assignment
+variants:
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Configured path category & $D_{\mathrm{tx}}$ (MB) & $D_{\mathrm{tx}}/B_{\mathrm{tx}}$ at 1 MB/s\\
+\midrule
+local & 0 & 0 s\\
+same zone & 2 & 2 s\\
+cross zone & 40 & 40 s\\
+\bottomrule
+\end{tabular}
+\end{center}
+In the \texttt{none} variants, lookup has no affinity rule and the simulator's default resource policy applies. In the
+\texttt{owner} variants, lookup is hard-pinned to instance \#0; cache write has hard affinity to the resource recorded
+for lookup, and replication has hard anti-affinity to that resource.
+
+These configurations are a controlled proxy for locality costs, not a topology-aware network simulation. The value
+$D_{\mathrm{tx}}$ is the task's fixed data-volume demand and is independent of which node is selected. Therefore the
+same-zone and cross-zone service costs do not arise from node-pair distance, and \#0 is treated as the owner in every
+\texttt{owner} configuration. The model has no zone labels, key-owner map, per-link bandwidth, propagation latency or
+link contention. A topology-aware version would need a plugin/model extension that determines the selected node and
+owner, then computes a per-pair network cost.
+
+\subsection{Heterogeneous Nodes and Routing}
+
+The third experiment assigns three cache instances with equal network speed $B_{\mathrm{tx}}=1$ MB/s but different
+CPU speeds: $S_{\mathrm{cpu},0}=2000$, $S_{\mathrm{cpu},1}=1000$, and $S_{\mathrm{cpu},2}=500$ instructions/s. A
+lookup workload of 10,000 instructions and 10 MB has nominal $p=1$ service times 15, 20 and 30 s on nodes \#0, \#1
+and \#2.
+
+The uniform-routing control uses a separate BPMN with an exclusive gateway whose branches each have probability 1/3.
+Each branch leads to a task hard-pinned to one cache instance. It provides probabilistic uniform assignment, not
+deterministic round robin; if the selected node is busy, the request waits for that node rather than failing over.
+
+The comparison configuration uses the distributed-cache BPMN and gives the single cache-lookup task soft-affinity
+weights 4, 2 and 1 for the three instances. The current ranker selects the highest-scoring available candidate; it
+does not allocate in a 4:2:1 probability ratio. The comparison therefore evaluates fast-node preference with
+availability-based fallback, not proportional weighted routing. A true proportional or capacity-aware policy
+requires weighted random assignment or a scheduler that explicitly considers expected service time.
+
+The principal metrics are lookup assignment fraction by node, per-node utilization, queueing delay at each node, and
+hit/miss response time. The uniform baseline is expected to route one third of requests to each node, while soft
+ranking should favor the faster node when it is among the feasible candidates. The simulation configs should be run
+with independent gateway seeds when an independent routing/arrival comparison is intended.
+
+\section{Reproducibility}
+
+The generated files are under \path{samples/other_cache_scenarios/}. Regenerate them from the repository root with:
+\begin{verbatim}
+python3 samples/cache_scenarios/run_experiments.py write-other-scenarios
+\end{verbatim}
+The configurations have not been executed for this paper draft; the outcomes above are analytical expectations and
+hypotheses to test, not empirical results. For reproducible runs, use the same global seed across paired variants,
+record the software revision, enable BPS/XES logging, and use
+\texttt{-Dscylla.independentSeeds=true} when random gateway decisions should be independent of arrivals. Store each
+run's inputs and output log separately.
+
+\section{Limitations and Future Work}
+
+The current scenarios do not compute cache hits from contents, model key skew, derive zones or owners from topology,
+model network propagation latency, or dynamically route in proportion to soft-affinity weights. The service-time model
+uses fixed per-resource speeds and does not share CPU, I/O or link capacity continuously among concurrent tasks.
+Whole-second truncation also limits studies of small delays. Future extensions should add per-node cache state and
+replacement policies, an explicit network graph with pair-specific latency/bandwidth, and a policy interface for
+weighted or capacity-aware placement. Each addition should be evaluated against an analytically tractable baseline
+before interpreting larger-scale results.
+
+\section{Conclusion}
+
+The extension connects BPMN task workloads to heterogeneous resource capabilities and makes affinity/history visible
+to resource selection while retaining the simulator's existing event and queue model. The three cache scenarios
+provide controlled experiments for scale-out, transfer-cost sensitivity and heterogeneous-node routing. Their most
+important methodological result is also a boundary: fixed workload and ranking rules can demonstrate scheduler
+behavior, but they do not by themselves implement cache state, topology-dependent latency or probabilistic weighted
+routing.
+
+\end{document}

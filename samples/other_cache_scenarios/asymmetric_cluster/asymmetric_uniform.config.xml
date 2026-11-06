@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Time model: 1 simulated second stands for 100 ms of real time. Speeds and demands are abstract units. -->
+<!-- Uniform gateway probabilities select one of three hard-pinned lookup tasks; this is the random routing control, not a weighted-affinity policy. -->
+<bsim:definitions xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" id="asymmetric-uniform-config-definitions" targetNamespace="http://www.hpi.de">
+  <bsim:simulationConfiguration id="asymmetric-uniform-config" processRef="asymmetric_round_robin" processInstances="20000" startDateTime="2025-01-01T00:00:00.000+00:00" randomSeed="42">
+    <bsim:startEvent id="StartEvent_1">
+      <bsim:arrivalRate timeUnit="SECONDS">
+        <bsim:exponentialDistribution>
+          <bsim:mean>50</bsim:mean>
+        </bsim:exponentialDistribution>
+      </bsim:arrivalRate>
+    </bsim:startEvent>
+    <bsim:exclusiveGateway id="Gateway_Route">
+      <bsim:outgoingSequenceFlow id="Flow_Node0"><bsim:branchingProbability>0.333333</bsim:branchingProbability></bsim:outgoingSequenceFlow>
+      <bsim:outgoingSequenceFlow id="Flow_Node1"><bsim:branchingProbability>0.333333</bsim:branchingProbability></bsim:outgoingSequenceFlow>
+      <bsim:outgoingSequenceFlow id="Flow_Node2"><bsim:branchingProbability>0.333333</bsim:branchingProbability></bsim:outgoingSequenceFlow>
+    </bsim:exclusiveGateway>
+    <bsim:task id="Cache_Lookup_0" name="Cache lookup node 0">
+      <bsim:affinity>
+        <bsim:resource id="cache" instance="#0" relation="affinity" mode="hard" />
+      </bsim:affinity>
+      <bsim:resources>
+        <bsim:resource id="cache" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="10000" />
+      <bsim:attribute key="txMB" value="10" />
+    </bsim:task>
+    <bsim:task id="Cache_Lookup_1" name="Cache lookup node 1">
+      <bsim:affinity>
+        <bsim:resource id="cache" instance="#1" relation="affinity" mode="hard" />
+      </bsim:affinity>
+      <bsim:resources>
+        <bsim:resource id="cache" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="10000" />
+      <bsim:attribute key="txMB" value="10" />
+    </bsim:task>
+    <bsim:task id="Cache_Lookup_2" name="Cache lookup node 2">
+      <bsim:affinity>
+        <bsim:resource id="cache" instance="#2" relation="affinity" mode="hard" />
+      </bsim:affinity>
+      <bsim:resources>
+        <bsim:resource id="cache" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="10000" />
+      <bsim:attribute key="txMB" value="10" />
+    </bsim:task>
+  </bsim:simulationConfiguration>
+</bsim:definitions>

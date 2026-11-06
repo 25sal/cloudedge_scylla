@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Hierarchical_FL" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js" exporterVersion="18.13.2">
+  <bpmn:collaboration id="Collaboration_Hierarchical">
+    <bpmn:participant id="Participant_Hierarchical" name="Student Client                                                    School Fog Server" processRef="Process_Hierarchical_FL" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Hierarchical_FL" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Hierarchical">
+      <bpmn:lane id="Lane_Student_Client" name="Student Client Lane">
+        <bpmn:flowNodeRef>Event_C_Start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Receive_School_Weights</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Student_Local_Train</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmit_To_School</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_C_End</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_School_Server" name="School Server Lane (Fog Aggregator)">
+        <bpmn:flowNodeRef>Event_S_Start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_School_Initialization</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_School_Broadcast</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Catch_Student_Weights</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Receive_Student_Weights</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_School_Sync</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_School_Partial_Averaging</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmit_To_Workstation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_S_End</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Event_C_Start">
+      <bpmn:outgoing>Flow_H_C1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_H_C1" sourceRef="Event_C_Start" targetRef="Activity_Receive_School_Weights" />
+    <bpmn:receiveTask id="Activity_Receive_School_Weights" name="Receive School Weights">
+      <bpmn:incoming>Flow_H_C1</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_C2</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_H_C2" sourceRef="Activity_Receive_School_Weights" targetRef="Activity_Student_Local_Train" />
+    <bpmn:task id="Activity_Student_Local_Train" name="Train Local Student Data">
+      <bpmn:incoming>Flow_H_C2</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_C3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_H_C3" sourceRef="Activity_Student_Local_Train" targetRef="Activity_Transmit_To_School" />
+    <bpmn:sendTask id="Activity_Transmit_To_School" name="Transmit Local Weights to School">
+      <bpmn:incoming>Flow_H_C3</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_C4</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="Flow_H_C4" sourceRef="Activity_Transmit_To_School" targetRef="Event_C_End" />
+    <bpmn:endEvent id="Event_C_End">
+      <bpmn:incoming>Flow_H_C4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="Event_S_Start">
+      <bpmn:outgoing>Flow_H_S1</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_H_Trigger" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_H_S1" sourceRef="Event_S_Start" targetRef="Activity_School_Initialization" />
+    <bpmn:task id="Activity_School_Initialization" name="Initialize Local Cluster Modality">
+      <bpmn:incoming>Flow_H_S1</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_S2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_H_S2" sourceRef="Activity_School_Initialization" targetRef="Event_School_Broadcast" />
+    <bpmn:intermediateThrowEvent id="Event_School_Broadcast">
+      <bpmn:incoming>Flow_H_S2</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_S3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_School_Out" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_H_S3" sourceRef="Event_School_Broadcast" targetRef="Event_Catch_Student_Weights" />
+    <bpmn:intermediateCatchEvent id="Event_Catch_Student_Weights">
+      <bpmn:incoming>Flow_H_S3</bpmn:incoming>
+      <bpmn:incoming>Flow_School_Loop</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_S4</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_Weights_In" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_H_S4" sourceRef="Event_Catch_Student_Weights" targetRef="Activity_Receive_Student_Weights" />
+    <bpmn:receiveTask id="Activity_Receive_Student_Weights" name="Receive Student Weights">
+      <bpmn:incoming>Flow_H_S4</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_S5</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_H_S5" sourceRef="Activity_Receive_Student_Weights" targetRef="Gateway_School_Sync" />
+    <bpmn:exclusiveGateway id="Gateway_School_Sync">
+      <bpmn:incoming>Flow_H_S5</bpmn:incoming>
+      <bpmn:outgoing>Flow_To_School_Avg</bpmn:outgoing>
+      <bpmn:outgoing>Flow_School_Loop</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_School_Loop" name="Students Received &lt; M_local" sourceRef="Gateway_School_Sync" targetRef="Event_Catch_Student_Weights" />
+    <bpmn:sequenceFlow id="Flow_To_School_Avg" sourceRef="Gateway_School_Sync" targetRef="Activity_School_Partial_Averaging" />
+    <bpmn:task id="Activity_School_Partial_Averaging" name="Perform Local Sub-Cluster Model Averaging">
+      <bpmn:incoming>Flow_To_School_Avg</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_S6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_H_S6" sourceRef="Activity_School_Partial_Averaging" targetRef="Activity_Transmit_To_Workstation" />
+    <bpmn:sendTask id="Activity_Transmit_To_Workstation" name="Transmit Aggregated Weights to Central Workstation">
+      <bpmn:incoming>Flow_H_S6</bpmn:incoming>
+      <bpmn:outgoing>Flow_H_S7</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="Flow_H_S7" sourceRef="Activity_Transmit_To_Workstation" targetRef="Event_S_End" />
+    <bpmn:endEvent id="Event_S_End">
+      <bpmn:incoming>Flow_H_S7</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Hierarchical">
+    <bpmndi:BPMNPlane id="BPMNPlane_Hierarchical" bpmnElement="Collaboration_Hierarchical">
+      <bpmndi:BPMNShape id="Participant_Hierarchical_di" bpmnElement="Participant_Hierarchical" isHorizontal="true">
+        <dc:Bounds x="152" y="80" width="1188" height="450" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Student_Client_di" bpmnElement="Lane_Student_Client" isHorizontal="true">
+        <dc:Bounds x="182" y="290" width="1158" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_School_Server_di" bpmnElement="Lane_School_Server" isHorizontal="true">
+        <dc:Bounds x="182" y="80" width="1158" height="210" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_C_Start_di" bpmnElement="Event_C_Start"><dc:Bounds x="212" y="415" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Receive_School_Weights_di" bpmnElement="Activity_Receive_School_Weights"><dc:Bounds x="300" y="393" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Student_Local_Train_di" bpmnElement="Activity_Student_Local_Train"><dc:Bounds x="460" y="393" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmit_To_School_di" bpmnElement="Activity_Transmit_To_School"><dc:Bounds x="620" y="393" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_C_End_di" bpmnElement="Event_C_End"><dc:Bounds x="782" y="415" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_S_Start_di" bpmnElement="Event_S_Start"><dc:Bounds x="212" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_School_Initialization_di" bpmnElement="Activity_School_Initialization"><dc:Bounds x="300" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_School_Broadcast_di" bpmnElement="Event_School_Broadcast"><dc:Bounds x="462" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Catch_Student_Weights_di" bpmnElement="Event_Catch_Student_Weights"><dc:Bounds x="612" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Receive_Student_Weights_di" bpmnElement="Activity_Receive_Student_Weights"><dc:Bounds x="710" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_School_Sync_di" bpmnElement="Gateway_School_Sync" isMarkerVisible="true"><dc:Bounds x="875" y="165" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_School_Partial_Averaging_di" bpmnElement="Activity_School_Partial_Averaging"><dc:Bounds x="970" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmit_To_Workstation_di" bpmnElement="Activity_Transmit_To_Workstation"><dc:Bounds x="1110" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_S_End_di" bpmnElement="Event_S_End"><dc:Bounds x="1272" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_H_C1_di" bpmnElement="Flow_H_C1"><di:waypoint x="248" y="433" /><di:waypoint x="300" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_C2_di" bpmnElement="Flow_H_C2"><di:waypoint x="400" y="433" /><di:waypoint x="460" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_C3_di" bpmnElement="Flow_H_C3"><di:waypoint x="560" y="433" /><di:waypoint x="620" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_C4_di" bpmnElement="Flow_H_C4"><di:waypoint x="720" y="433" /><di:waypoint x="782" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_S1_di" bpmnElement="Flow_H_S1"><di:waypoint x="248" y="190" /><di:waypoint x="300" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_S2_di" bpmnElement="Flow_H_S2"><di:waypoint x="400" y="190" /><di:waypoint x="462" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_S3_di" bpmnElement="Flow_H_S3"><di:waypoint x="498" y="190" /><di:waypoint x="612" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_S4_di" bpmnElement="Flow_H_S4"><di:waypoint x="648" y="190" /><di:waypoint x="710" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_S5_di" bpmnElement="Flow_H_S5"><di:waypoint x="810" y="190" /><di:waypoint x="875" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_To_School_Avg_di" bpmnElement="Flow_To_School_Avg"><di:waypoint x="925" y="190" /><di:waypoint x="970" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_School_Loop_di" bpmnElement="Flow_School_Loop"><di:waypoint x="900" y="165" /><di:waypoint x="900" y="120" /><di:waypoint x="630" y="120" /><di:waypoint x="630" y="172" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_S6_di" bpmnElement="Flow_H_S6"><di:waypoint x="1070" y="190" /><di:waypoint x="1110" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_H_S7_di" bpmnElement="Flow_H_S7"><di:waypoint x="1210" y="190" /><di:waypoint x="1272" y="190" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

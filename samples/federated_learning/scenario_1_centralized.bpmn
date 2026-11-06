@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Centralized_Pure" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js" exporterVersion="18.13.2">
+  <bpmn:collaboration id="Collaboration_Centralized">
+    <bpmn:participant id="Participant_Central" name="Client                                                              Server" processRef="Process_Centralized" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Centralized" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Central">
+      <bpmn:lane id="Lane_Client_Central" name="Client Lane">
+        <bpmn:flowNodeRef>Event_Start_Client</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Catch_Model</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Receive_Metadata</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmit_RawData</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Throw_Data</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Client_End</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_End_Client</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Server_Central" name="Server Lane">
+        <bpmn:flowNodeRef>Event_Server_Trigger</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Init_Dataset</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Throw_Model</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Catch_Data</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Receive_RawData</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Check_M_Data</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Centralized_Training</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_End_Server</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Event_Start_Client">
+      <bpmn:outgoing>Flow_C1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_C1" sourceRef="Event_Start_Client" targetRef="Event_Catch_Model" />
+    <bpmn:intermediateCatchEvent id="Event_Catch_Model">
+      <bpmn:incoming>Flow_C1</bpmn:incoming>
+      <bpmn:outgoing>Flow_C2</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_Model" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_C2" sourceRef="Event_Catch_Model" targetRef="Activity_Receive_Metadata" />
+    <bpmn:receiveTask id="Activity_Receive_Metadata" name="Receive Training Request">
+      <bpmn:incoming>Flow_C2</bpmn:incoming>
+      <bpmn:outgoing>Flow_C3</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_C3" sourceRef="Activity_Receive_Metadata" targetRef="Activity_Transmit_RawData" />
+    <bpmn:sendTask id="Activity_Transmit_RawData" name="Transmit Raw Data">
+      <bpmn:incoming>Flow_C3</bpmn:incoming>
+      <bpmn:outgoing>Flow_C4</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="Flow_C4" sourceRef="Activity_Transmit_RawData" targetRef="Event_Throw_Data" />
+    <bpmn:intermediateThrowEvent id="Event_Throw_Data">
+      <bpmn:incoming>Flow_C4</bpmn:incoming>
+      <bpmn:outgoing>Flow_C5</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_Data" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_C5" sourceRef="Event_Throw_Data" targetRef="Gateway_Client_End" />
+    <bpmn:exclusiveGateway id="Gateway_Client_End">
+      <bpmn:incoming>Flow_C5</bpmn:incoming>
+      <bpmn:outgoing>Flow_End_C</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="Event_End_Client">
+      <bpmn:incoming>Flow_End_C</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_End_C" sourceRef="Gateway_Client_End" targetRef="Event_End_Client" />
+    <bpmn:intermediateCatchEvent id="Event_Server_Trigger">
+      <bpmn:outgoing>Flow_S1</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_Trigger" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_S1" sourceRef="Event_Server_Trigger" targetRef="Activity_Init_Dataset" />
+    <bpmn:task id="Activity_Init_Dataset" name="Storage Initialization">
+      <bpmn:incoming>Flow_S1</bpmn:incoming>
+      <bpmn:outgoing>Flow_S2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_S2" sourceRef="Activity_Init_Dataset" targetRef="Event_Throw_Model" />
+    <bpmn:intermediateThrowEvent id="Event_Throw_Model">
+      <bpmn:incoming>Flow_S2</bpmn:incoming>
+      <bpmn:outgoing>Flow_S3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_Model_Out" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_S3" sourceRef="Event_Throw_Model" targetRef="Event_Catch_Data" />
+    <bpmn:intermediateCatchEvent id="Event_Catch_Data">
+      <bpmn:incoming>Flow_S3</bpmn:incoming>
+      <bpmn:incoming>Flow_Loop_Data</bpmn:incoming>
+      <bpmn:outgoing>Flow_S4</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Msg_Data_In" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_S4" sourceRef="Event_Catch_Data" targetRef="Activity_Receive_RawData" />
+    <bpmn:receiveTask id="Activity_Receive_RawData" name="Receive Raw Data">
+      <bpmn:incoming>Flow_S4</bpmn:incoming>
+      <bpmn:outgoing>Flow_S5</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_S5" sourceRef="Activity_Receive_RawData" targetRef="Gateway_Check_M_Data" />
+    <bpmn:exclusiveGateway id="Gateway_Check_M_Data">
+      <bpmn:incoming>Flow_S5</bpmn:incoming>
+      <bpmn:outgoing>Flow_To_Train</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Loop_Data</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_Loop_Data" name="Data uploads &lt; M" sourceRef="Gateway_Check_M_Data" targetRef="Event_Catch_Data" />
+    <bpmn:sequenceFlow id="Flow_To_Train" sourceRef="Gateway_Check_M_Data" targetRef="Activity_Centralized_Training" />
+    <bpmn:task id="Activity_Centralized_Training" name="Centralized Deep Learning Training">
+      <bpmn:incoming>Flow_To_Train</bpmn:incoming>
+      <bpmn:outgoing>Flow_S6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_S6" sourceRef="Activity_Centralized_Training" targetRef="Event_End_Server" />
+    <bpmn:endEvent id="Event_End_Server">
+      <bpmn:incoming>Flow_S6</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Central">
+    <bpmndi:BPMNPlane id="BPMNPlane_Central" bpmnElement="Collaboration_Centralized">
+      <bpmndi:BPMNShape id="Participant_Central_di" bpmnElement="Participant_Central" isHorizontal="true">
+        <dc:Bounds x="152" y="80" width="1188" height="450" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Client_Central_di" bpmnElement="Lane_Client_Central" isHorizontal="true">
+        <dc:Bounds x="182" y="290" width="1158" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Server_Central_di" bpmnElement="Lane_Server_Central" isHorizontal="true">
+        <dc:Bounds x="182" y="80" width="1158" height="210" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Start_Client_di" bpmnElement="Event_Start_Client"><dc:Bounds x="212" y="415" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Catch_Model_di" bpmnElement="Event_Catch_Model"><dc:Bounds x="302" y="415" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Receive_Metadata_di" bpmnElement="Activity_Receive_Metadata"><dc:Bounds x="400" y="393" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmit_RawData_di" bpmnElement="Activity_Transmit_RawData"><dc:Bounds x="560" y="393" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Throw_Data_di" bpmnElement="Event_Throw_Data"><dc:Bounds x="722" y="415" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Client_End_di" bpmnElement="Gateway_Client_End" isMarkerVisible="true"><dc:Bounds x="855" y="408" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_End_Client_di" bpmnElement="Event_End_Client"><dc:Bounds x="992" y="415" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Server_Trigger_di" bpmnElement="Event_Server_Trigger"><dc:Bounds x="212" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Init_Dataset_di" bpmnElement="Activity_Init_Dataset"><dc:Bounds x="300" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Throw_Model_di" bpmnElement="Event_Throw_Model"><dc:Bounds x="462" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Catch_Data_di" bpmnElement="Event_Catch_Data"><dc:Bounds x="612" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Receive_RawData_di" bpmnElement="Activity_Receive_RawData"><dc:Bounds x="710" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Check_M_Data_di" bpmnElement="Gateway_Check_M_Data" isMarkerVisible="true"><dc:Bounds x="875" y="165" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Centralized_Training_di" bpmnElement="Activity_Centralized_Training"><dc:Bounds x="1010" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_End_Server_di" bpmnElement="Event_End_Server"><dc:Bounds x="1192" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_C1_di" bpmnElement="Flow_C1"><di:waypoint x="248" y="433" /><di:waypoint x="302" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C2_di" bpmnElement="Flow_C2"><di:waypoint x="338" y="433" /><di:waypoint x="400" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C3_di" bpmnElement="Flow_C3"><di:waypoint x="500" y="433" /><di:waypoint x="560" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C4_di" bpmnElement="Flow_C4"><di:waypoint x="660" y="433" /><di:waypoint x="722" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C5_di" bpmnElement="Flow_C5"><di:waypoint x="758" y="433" /><di:waypoint x="855" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_End_C_di" bpmnElement="Flow_End_C"><di:waypoint x="905" y="433" /><di:waypoint x="992" y="433" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S1_di" bpmnElement="Flow_S1"><di:waypoint x="248" y="190" /><di:waypoint x="300" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S2_di" bpmnElement="Flow_S2"><di:waypoint x="400" y="190" /><di:waypoint x="462" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S3_di" bpmnElement="Flow_S3"><di:waypoint x="498" y="190" /><di:waypoint x="612" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S4_di" bpmnElement="Flow_S4"><di:waypoint x="648" y="190" /><di:waypoint x="710" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S5_di" bpmnElement="Flow_S5"><di:waypoint x="810" y="190" /><di:waypoint x="875" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_To_Train_di" bpmnElement="Flow_To_Train"><di:waypoint x="925" y="190" /><di:waypoint x="1010" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Loop_Data_di" bpmnElement="Flow_Loop_Data"><di:waypoint x="900" y="165" /><di:waypoint x="900" y="120" /><di:waypoint x="630" y="120" /><di:waypoint x="630" y="172" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S6_di" bpmnElement="Flow_S6"><di:waypoint x="1110" y="190" /><di:waypoint x="1192" y="190" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

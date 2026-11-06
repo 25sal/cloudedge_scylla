@@ -1,0 +1,13 @@
+Act as a systems performance engineer and Scylla simulator expert. I need to simulate an asymmetric cluster with heterogeneous hardware to demonstrate how workload routing and affinity affect resource utilization.
+
+Please generate the configuration or simulation setup based on these specifications:
+- Heterogeneous Cache Nodes:
+  * Node #0 (New/Fast): cpuSpeed 2000
+  * Node #1 (Standard): cpuSpeed 1000
+  * Node #2 (Legacy/Slow): cpuSpeed 500
+- Workload Requirements: 20,000 requests with standard cache lookup workloads.
+- Routing Strategies to Compare:
+  1. Strategy 1 (Random/Round-Robin): The gateway distributes requests uniformly across all nodes regardless of their speed.
+  2. Strategy 2 (Proportional/Weighted Soft Affinity): A soft affinity rule that routes requests proportionally to the node's power (e.g., Weight 4 for Node #0, Weight 2 for Node #1, Weight 1 for Node #2).
+
+Provide the configuration layout or rules definition for the Scylla simulator to model these hardware discrepancies and the two routing strategies.

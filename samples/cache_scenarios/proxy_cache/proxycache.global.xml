@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- cpuSpeed: instructions/s, ioRead/ioWrite: operations/s, txSpeed/rxSpeed: MB/s (abstract units) -->
+<bsim:globalConfiguration xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" targetNamespace="http://www.hpi.de" id="proxycache-global" softmaxExponent="1">
+  <bsim:resourceData>
+    <bsim:dynamicResource id="proxy" defaultQuantity="1" defaultCost="1" defaultTimeUnit="SECONDS" cpuSpeed="1000" />
+    <bsim:dynamicResource id="origin" defaultQuantity="1" defaultCost="1" defaultTimeUnit="SECONDS" ioRead="1" />
+  </bsim:resourceData>
+  <bsim:randomSeed>42</bsim:randomSeed>
+</bsim:globalConfiguration>

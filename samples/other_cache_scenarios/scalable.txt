@@ -1,0 +1,9 @@
+Act as a systems performance engineer and Scylla simulator expert. Based on Scenario B (distributed cache with affinity), I need to demonstrate system scalability by varying the number of cache nodes.
+
+Please generate the configuration or setup to execute 4 distinct simulation runs with the following criteria:
+- Fixed Workload: 20,000 requests, Hit Ratio = 0.9.
+- Constant Scheduling Variant: 'none' (No affinity rules, free allocation).
+- Variable Factor: Execute 4 runs changing only the number of cache nodes (N): 2, 4, 8, and 16 nodes.
+- Baseline Hardware: cache nodes with cpuSpeed 1000, txSpeed 1; db with 1 node, ioRead 1.
+
+Provide the configuration updates or scripts needed, and explain briefly what metrics (such as cache utilization 'ρ' and total response miss time) we should expect to see to prove the scalability limits or database bottlenecks.

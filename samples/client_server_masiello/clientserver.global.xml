@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bsim:globalConfiguration xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" targetNamespace="http://www.hpi.de" id="clientserver-global" softmaxExponent="3">
+  <bsim:resourceData>
+    <!-- 64 CLIENT REALI (le istanze saranno client_#1, client_#2, ..., client_#64) -->
+    <bsim:dynamicResource id="client" defaultQuantity="32" defaultCost="2000.0" defaultTimeUnit="SECONDS" defaultTimetableId="t1" cpuSpeed="2000" ioRead="1" ioWrite="1" txSpeed="1" rxSpeed="1" />
+    <!-- 4 SERVER REALI -->
+    <bsim:dynamicResource id="server" defaultQuantity="4" defaultCost="4000.0" defaultTimeUnit="SECONDS" defaultTimetableId="t1" cpuSpeed="4000" ioRead="5" ioWrite="5" txSpeed="5" rxSpeed="5" />
+  </bsim:resourceData>
+  <bsim:zoneOffset>+01:00</bsim:zoneOffset>
+  <bsim:timetables>
+    <bsim:timetable id="t1">
+      <bsim:timetableItem from="MONDAY" to="SUNDAY" beginTime="00:00" endTime="23:59:59" />
+    </bsim:timetable>
+  </bsim:timetables>
+  <bsim:randomSeed>42</bsim:randomSeed>
+</bsim:globalConfiguration>

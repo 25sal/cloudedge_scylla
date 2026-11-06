@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bsim:definitions xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" targetNamespace="http://www.hpi.de">
+  <bsim:simulationConfiguration id="clientserver-affinity-config" processRef="clientserver" processInstances="2" startDateTime="2025-01-01T00:00:00+01:00[Europe/Rome]" randomSeed="123">
+    <bsim:resources>
+      <!-- CLIENT: usa le 64 istanze dichiarate nel GLOBAL -->
+      <bsim:resourceType id="client" defaultTimetableId="default">
+        <bsim:instance name="client" />
+      </bsim:resourceType>
+      <!-- SERVER: 4 istanze reali -->
+      <bsim:resourceType id="server" defaultTimetableId="default">
+        <bsim:instance name="server1" />
+        <bsim:instance name="server2" />
+        <bsim:instance name="server3" />
+        <bsim:instance name="server4" />
+      </bsim:resourceType>
+    </bsim:resources>
+    <bsim:timing>
+      <bsim:timetable id="default">
+        <bsim:available from="00:00" to="23:59" />
+      </bsim:timetable>
+    </bsim:timing>
+    <bsim:startEvent id="StartEvent_1">
+      <bsim:arrivalRate timeUnit="SECONDS">
+        <bsim:constantDistribution>
+          <bsim:constantValue>0.25</bsim:constantValue>
+        </bsim:constantDistribution>
+      </bsim:arrivalRate>
+    </bsim:startEvent>
+    <!-- TASKS DEL CLIENT -->
+    <bsim:Task id="Client_HTTP_Request">
+      <bsim:plugin>resourceCost</bsim:plugin>
+      <bsim:resources>
+        <bsim:resource id="client" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="2000" />
+      <bsim:attribute key="readOps" value="10" />
+      <bsim:attribute key="writeOps" value="5" />
+      <bsim:attribute key="txMB" value="1" />
+      <bsim:attribute key="rxMB" value="1" />
+    </bsim:Task>
+    <bsim:Task id="Client_IMG_Request">
+      <bsim:plugin>resourceCost</bsim:plugin>
+      <bsim:resources>
+        <bsim:resource id="client" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="4000" />
+      <bsim:attribute key="readOps" value="20" />
+      <bsim:attribute key="writeOps" value="10" />
+      <bsim:attribute key="txMB" value="5" />
+      <bsim:attribute key="rxMB" value="2" />
+    </bsim:Task>
+    <!-- TASKS DEL SERVER -->
+    <bsim:Task id="Server_Send_HTML">
+      <bsim:affinity>
+        <bsim:resource id="server" instance="#2" relation="affinity" mode="soft" weight="3" />
+      </bsim:affinity>
+      <bsim:plugin>resourceCost</bsim:plugin>
+      <bsim:resources>
+        <bsim:resource id="server" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="3000" />
+      <bsim:attribute key="readOps" value="30" />
+      <bsim:attribute key="writeOps" value="10" />
+      <bsim:attribute key="txMB" value="2" />
+      <bsim:attribute key="rxMB" value="1" />
+    </bsim:Task>
+    <bsim:Task id="Server_Send_IMG">
+      <bsim:affinity>
+        <bsim:history task="Server_Send_HTML" relation="affinity" mode="hard" />
+      </bsim:affinity>
+      <bsim:plugin>resourceCost</bsim:plugin>
+      <bsim:resources>
+        <bsim:resource id="server" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="8000" />
+      <bsim:attribute key="readOps" value="60" />
+      <bsim:attribute key="writeOps" value="20" />
+      <bsim:attribute key="txMB" value="8" />
+      <bsim:attribute key="rxMB" value="3" />
+    </bsim:Task>
+    <bsim:Task id="Client_Process_Response">
+      <bsim:plugin>resourceCost</bsim:plugin>
+      <bsim:resources>
+        <bsim:resource id="client" amount="1" />
+      </bsim:resources>
+      <bsim:attribute key="numInstructions" value="1000" />
+      <bsim:attribute key="readOps" value="5" />
+      <bsim:attribute key="writeOps" value="5" />
+      <bsim:attribute key="txMB" value="0.5" />
+      <bsim:attribute key="rxMB" value="0.5" />
+    </bsim:Task>
+    <bsim:resourceQueues>
+      <bsim:resourceQueue resourceId="server" capacity="unlimited" />
+    </bsim:resourceQueues>
+  </bsim:simulationConfiguration>
+</bsim:definitions>

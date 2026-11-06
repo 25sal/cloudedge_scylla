@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- cpuSpeed: instructions/s, ioRead/ioWrite: operations/s, txSpeed/rxSpeed: MB/s (abstract units) -->
+<!-- Node identities are #0 (fast), #1 (standard), #2 (legacy). Soft-affinity weights are priorities, not probability weights in the current plugin. -->
+<bsim:globalConfiguration xmlns:bsim="http://bsim.hpi.uni-potsdam.de/scylla/simModel" targetNamespace="http://www.hpi.de" id="asymmetric-global" softmaxExponent="1">
+  <bsim:resourceData>
+    <bsim:dynamicResource id="cache" defaultQuantity="3" defaultCost="1" defaultTimeUnit="SECONDS" cpuSpeed="1000" txSpeed="1">
+      <bsim:instance name="#0" cpuSpeed="2000" />
+      <bsim:instance name="#1" cpuSpeed="1000" />
+      <bsim:instance name="#2" cpuSpeed="500" />
+    </bsim:dynamicResource>
+    <bsim:dynamicResource id="db" defaultQuantity="1" defaultCost="1" defaultTimeUnit="SECONDS" ioRead="1" />
+    <bsim:dynamicResource id="app" defaultQuantity="20" defaultCost="1" defaultTimeUnit="SECONDS" cpuSpeed="1000" />
+  </bsim:resourceData>
+  <bsim:randomSeed>42</bsim:randomSeed>
+</bsim:globalConfiguration>

@@ -43,11 +43,19 @@ public class ExclusiveGatewayDistributionConversionPlugin extends DistributionCo
                 Double probability = branchingProbabilities.get(nextNodeId);
                 desmojDist.addEntry(nextNodeId, probability);
             }
-            desmojDist.setSeed(randomSeed);
+            desmojDist.setSeed(gatewaySeed(randomSeed, nodeId));
             branchingDistributionsExclusive.put(nodeId, desmojDist);
         }
 
         return branchingDistributionsExclusive;
+    }
+
+    /**
+     * By default every distribution of a configuration uses the same seed, which makes a gateway decision correlated
+     * with the arrival process. -Dscylla.independentSeeds=true derives a separate stream per gateway instead.
+     */
+    static long gatewaySeed(long randomSeed, int nodeId) {
+        return Boolean.getBoolean("scylla.independentSeeds") ? randomSeed + 1000003L * nodeId : randomSeed;
     }
 
 }

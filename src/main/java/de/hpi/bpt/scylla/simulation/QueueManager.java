@@ -23,6 +23,7 @@ import de.hpi.bpt.scylla.model.global.resource.DynamicResourceInstance;
 import de.hpi.bpt.scylla.model.global.resource.Resource;
 import de.hpi.bpt.scylla.model.global.resource.TimetableItem;
 import de.hpi.bpt.scylla.plugin_type.simulation.resource.ResourceAssignmentPluggable;
+import de.hpi.bpt.scylla.plugin_type.simulation.resource.ResourceTupleRankingPluggable;
 import de.hpi.bpt.scylla.simulation.event.ScyllaEvent;
 import de.hpi.bpt.scylla.simulation.utils.DateTimeUtils;
 import de.hpi.bpt.scylla.simulation.utils.SimulationUtils;
@@ -204,6 +205,7 @@ public class QueueManager {
         List<ResourceObjectTuple> matchingTuples = findMatchingResourceObjectTuples(tuplesPerResource, resourceIds);
 
         if (matchingTuples.isEmpty()) { // no resources available
+            returnToQueues(availableResourceObjects);
             return null;
         }
 
@@ -220,6 +222,12 @@ public class QueueManager {
         // sort by average of last access times, ascending (see comparator)
         Collections.sort(matchingTuples, resourceObjectTupleComparator);
 
+        matchingTuples = ResourceTupleRankingPluggable.runPlugins(model, event, matchingTuples);
+        if (matchingTuples.isEmpty()) { // all candidates rejected by plugins
+            returnToQueues(availableResourceObjects);
+            return null;
+        }
+
         ResourceObjectTuple chosenTuple = matchingTuples.get(0);
         Set<ResourceObject> chosenObjects = chosenTuple.getResourceObjects();
 
@@ -231,6 +239,12 @@ public class QueueManager {
         }
 
         return chosenTuple;
+    }
+
+    private void returnToQueues(Map<String, List<ResourceObject>> polledResourceObjects) {
+        for (Map.Entry<String, List<ResourceObject>> entry : polledResourceObjects.entrySet()) {
+            getResourceObjects().get(entry.getKey()).addAll(entry.getValue());
+        }
     }
 
     public void assignResourcesToEvent(ScyllaEvent event, ResourceObjectTuple resourceObjectTuple) {
